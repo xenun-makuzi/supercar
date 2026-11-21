@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spare Parts | Super Car Parts</title>
+<link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" href="assets/favicon/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+<meta name="theme-color" content="#111317">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main></main>
+<footer id="ftr"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+// brand.html?b=ferrari  -> one template for every manufacturer; new brands added in the database appear automatically
+(async () => {
+  const brands = await layout(), M = $('main');
+  const b = brands.find(x => x.slug === new URLSearchParams(location.search).get('b'));
+  if (!b) { M.innerHTML = '<section class="wrap"><h2>Manufacturer not found</h2><p class="note">Choose a brand from the <a href="index.html#brands"><u>manufacturer list</u></a>.</p></section>'; return; }
+  const n = esc(b.name);
+  const story = brandStory(b);
+  document.title = `${b.name} Spare Parts | Super Car Parts`;
+  const [models, cats] = await Promise.all([get('models', q => q.eq('brand_id', b.id).order('sort')), get('categories', q => q.order('sort'))]);
+  const eras = [
+    ['modern', `Modern ${n} Models`, 'Current and latest-generation cars.'],
+    ['recent', `Recent Classic ${n} Models`, 'Sought-after cars from the last two decades.'],
+    ['heritage', `Heritage ${n} Models`, 'Collector icons that we still support.']
+  ];
+  const card = m => `<article class="mc"><div class="mt"><h3>${esc(m.name)}</h3><p>${esc(m.note || 'Parts available on request.')}</p><a href="store.html?brand=${b.slug}&q=${encodeURIComponent(m.name)}">Find parts</a></div>${pic(m.image_url, `assets/models/${b.slug}/${slug(m.name)}.jpg`, m.name)}</article>`;
+  const faq = [
+    [`Are your ${n} parts genuine?`, 'We supply genuine OEM parts and confirm the part number with you before you order.'],
+    [`Can you source a ${n} part that is not listed?`, 'Yes. Send us the model, variant and part number, or describe the part, and we will find it for you.'],
+    ['Do you ship worldwide?', 'Yes. We ship to owners and workshops worldwide with tracked, insured delivery. Shipping cost and lead time are included in your quote.'],
+    ['How do I get a quote?', 'Complete the form below. Add your WhatsApp number for the fastest reply.'],
+    ['What details should I include?', `Your ${n} model, variant and year, the part number if you have it, and a short description of what you need. A chassis number helps us confirm fitment.`]
+  ];
+  const heroSlides = [
+    {
+      eyebrow: `Genuine ${n} Parts`,
+      title: `${n} Spare Parts`,
+      text: story.tagline,
+      cta: `View ${n} Inventory`,
+      href: `store.html?brand=${b.slug}`
+    },
+    {
+      eyebrow: 'Model-specific sourcing',
+      title: 'Precision starts with the right fit.',
+      text: `Model year, variant and specification matter. We help match ${n} components to the exact vehicle details before you order.`,
+      cta: 'Find parts for your model',
+      href: `store.html?brand=${b.slug}`
+    },
+    {
+      eyebrow: 'Modern, recent and heritage models',
+      title: `Support for every chapter of ${n} motoring.`,
+      text: `From current models to celebrated classics, tell us what you drive and we will help source the parts your ${n} needs.`,
+      cta: 'Explore supported models',
+      href: '#models'
+    },
+    {
+      eyebrow: 'Specialist parts assistance',
+      title: `Looking for a hard-to-find ${n} part?`,
+      text: 'Share the model, year, variant or part reference. Our team will review the details and help identify the right component.',
+      cta: 'Request a parts quote',
+      href: '#quote'
+    }
+  ];
+  const heroImages = [
+    b.hero_url || `assets/brands/${b.slug}-1.jpg`,
+    `assets/brands/${b.slug}-2.jpg`,
+    `assets/brands/${b.slug}-3.jpg`,
+    `assets/brands/${b.slug}-4.jpg`
+  ];
+  M.innerHTML = `
+  <section class="hero sm" id="brandHero" role="region" aria-roledescription="carousel" aria-label="${n} parts highlights">
+    <div class="hero-track" id="brandHeroTrack">
+      ${heroSlides.map((slide, i) => `<article class="hero-slide" aria-label="Slide ${i + 1} of ${heroSlides.length}" aria-hidden="${i !== 0}">
+        ${pic(heroImages[i], '', `${b.name} automotive feature ${i + 1}`, 'hero-image', false)}
+        <div class="hero-slide-inner"><div class="hero-copy">
+          <span class="hero-eyebrow"><i></i>${esc(slide.eyebrow)}</span>
+          <span class="hero-logo">${logo(b)}</span>
+          <h1>${esc(slide.title)}</h1>
+          <p>${esc(slide.text)}</p>
+          <div class="hero-actions"><a class="btn" href="${esc(slide.href)}">${esc(slide.cta)} <span aria-hidden="true">↗</span></a><a class="hero-secondary" href="#quote">Request a quote <span aria-hidden="true">→</span></a></div>
+        </div></div>
+      </article>`).join('')}
+    </div>
+    <button class="hero-arrow hero-prev" type="button" aria-label="Previous slide">&#8592;</button>
+    <button class="hero-arrow hero-next" type="button" aria-label="Next slide">&#8594;</button>
+    <div class="hero-controls"><div class="hero-dots" id="brandHeroDots" aria-label="Choose a featured slide">
+      ${heroSlides.map((slide, i) => `<button type="button" class="hero-dot${i === 0 ? ' active' : ''}" aria-label="Show slide ${i + 1}" aria-current="${i === 0 ? 'true' : 'false'}"></button>`).join('')}
+    </div><span class="hero-count" id="brandHeroCount">01 / 04</span></div>
+    <a class="hero-scroll" href="#about"><span></span> Explore ${n} parts</a>
+  </section>
+
+  <section class="wrap split" id="about"><div><h2>About ${n} Parts at Super Car Parts</h2>
+    <p class="note">${esc(story.about)}</p></div><div class="logo-panel">${logo(b)}</div></section>
+
+  <section class="trust">
+    <div>${ico('award')}<h3>${n} Parts Specialist</h3><p>We source parts across the ${n} range, from current models to heritage cars.</p></div>
+    <div>${ico('shield')}<h3>Genuine Parts Authenticity</h3><p>Original manufacturer parts only, with the part number confirmed before you pay.</p></div>
+    <div>${ico('globe')}<h3>Global Shipping</h3><p>Tracked, insured delivery to owners and workshops worldwide.</p></div>
+  </section>
+
+  <section class="wrap" id="models"><h2>${n} Spare Parts by Model</h2>
+    <p class="note">Find parts for your car by model. If yours is not listed, send us the details and we will source it.</p>
+    ${eras.map(([k, t, d]) => { const l = models.filter(m => m.era === k); return l.length ? `<div class="era"><h3>${t}</h3><p class="note">${d}</p><div class="mgrid">${l.map(card).join('')}</div></div>` : ''; }).join('') || '<p class="note">Models for this brand are being added.</p>'}
+  </section>
+
+  <section class="band"><div class="wrap"><h2>${n} Parts and Accessories We Commonly Supply</h2>
+    <p class="note">Open a category to see what is in stock. Anything not listed can be sourced to order.</p>
+    <div class="pg">${cats.map(c => `<a href="store.html?brand=${b.slug}&cat=${c.slug}">${pic(c.image_url, `assets/parts/${c.slug}.jpg`, `${b.name} ${c.name}`)}<div><h3>${n} ${esc(c.name)}</h3><p>${esc(c.note || '')}</p></div></a>`).join('')}</div>
+    <p class="note" style="margin:32px 0 0">Whether you are servicing a ${n} in a workshop or restoring one at home, we can supply the part you need. Quote your chassis number or VIN where possible, so we can confirm fitment before we order.</p>
+  </div></section>
+
+  <section class="wrap"><h2>${n} Parts FAQ</h2><div style="margin-top:28px">${faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></section>
+
+  <section class="band" id="quote"><div class="wrap"><h2>Request a ${n} Parts Quote</h2>
+    <p class="note">Tell us your model, variant and part number if you have it. We will reply with a competitive quote.</p><div id="qf"></div></div></section>`;
+  quoteForm($('#qf'), brands, { make: b.name });
+
+  // Four separate manufacturer images with horizontal slide transitions.
+  const hero = $('#brandHero');
+  const track = $('#brandHeroTrack');
+  const slideEls = $$('.hero-slide', track);
+  const dotEls = $$('.hero-dot', $('#brandHeroDots'));
+  const count = $('#brandHeroCount');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let active = 0, timer = null, startX = 0, pointerDown = false;
+  const show = index => {
+    active = (index + slideEls.length) % slideEls.length;
+    track.style.transform = `translate3d(-${active * 100}%,0,0)`;
+    dotEls.forEach((dot, i) => {
+      dot.classList.toggle('active', i === active);
+      dot.setAttribute('aria-current', String(i === active));
+    });
+    slideEls.forEach((slide, i) => slide.setAttribute('aria-hidden', String(i !== active)));
+    count.textContent = `${String(active + 1).padStart(2, '0')} / ${String(slideEls.length).padStart(2, '0')}`;
+  };
+  const stop = () => { if (timer) clearInterval(timer); timer = null; };
+  const start = () => {
+    stop();
+    if (!reducedMotion && slideEls.length > 1) timer = setInterval(() => show(active + 1), 6500);
+  };
+  $('.hero-prev', hero).addEventListener('click', () => { show(active - 1); start(); });
+  $('.hero-next', hero).addEventListener('click', () => { show(active + 1); start(); });
+  dotEls.forEach((dot, i) => dot.addEventListener('click', () => { show(i); start(); }));
+  hero.addEventListener('mouseenter', stop);
+  hero.addEventListener('mouseleave', start);
+  hero.addEventListener('focusin', stop);
+  hero.addEventListener('focusout', e => { if (!hero.contains(e.relatedTarget)) start(); });
+  hero.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(active - 1); start(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); show(active + 1); start(); }
+  });
+  hero.addEventListener('touchstart', e => { startX = e.changedTouches[0].clientX; pointerDown = true; stop(); }, { passive: true });
+  hero.addEventListener('touchend', e => {
+    if (!pointerDown) return;
+    const distance = e.changedTouches[0].clientX - startX;
+    if (Math.abs(distance) > 45) show(active + (distance < 0 ? 1 : -1));
+    pointerDown = false;
+    start();
+  }, { passive: true });
+  show(0);
+  start();
+
+  if (location.hash) $(location.hash)?.scrollIntoView();
+})();
+</script>
+</body>
+</html>

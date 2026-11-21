@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parts Store | Super Car Parts</title>
+<link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" href="assets/favicon/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+<meta name="theme-color" content="#111317">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <section class="wrap">
+    <h2>Parts Store</h2>
+    <p class="note">Browse genuine parts across every manufacturer. Cannot find what you need? <a href="index.html#quote"><u>Request a quote</u></a> and we will source it.</p>
+    <div class="shop">
+      <aside class="filters" aria-label="Filters">
+        <label>Search<input id="fq" type="search" placeholder="Part name or number"></label>
+        <label>Manufacturer<select id="fb"></select></label>
+        <label>Part type<select id="fc"></select></label>
+        <label>Price range<span class="pr"><input id="lo" type="number" min="0" placeholder="Min"><input id="hi" type="number" min="0" placeholder="Max"></span></label>
+        <label>Sort by<select id="fs"><option value="">Newest</option><option value="a">Price, low to high</option><option value="d">Price, high to low</option></select></label>
+      </aside>
+      <div><p id="count" class="note" style="margin:0 0 16px"></p><div class="grid" id="pg"></div></div>
+    </div>
+  </section>
+</main>
+<footer id="ftr"></footer>
+<dialog id="dlg"><h3 id="dt" style="margin-bottom:16px"></h3><div id="df"></div><button class="btn sm" style="margin-top:16px" onclick="this.closest('dialog').close()">Close</button></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  const brands = await layout();
+  const [cats, prods] = await Promise.all([get('categories', q => q.order('sort')), get('products', q => q.order('created_at', { ascending: false }))]);
+  const P = new URLSearchParams(location.search);
+  const B = Object.fromEntries(brands.map(b => [b.id, b])), C = Object.fromEntries(cats.map(c => [c.id, c]));
+  const opts = (a, all) => `<option value="">${all}</option>` + a.map(x => `<option value="${x.slug}">${esc(x.name)}</option>`).join('');
+  $('#fb').innerHTML = opts(brands, 'All manufacturers');
+  $('#fc').innerHTML = opts(cats, 'All part types');
+  $('#fb').value = P.get('brand') || ''; $('#fc').value = P.get('cat') || ''; $('#fq').value = P.get('q') || '';
+
+  const render = () => {
+    const w = $('#fq').value.toLowerCase().split(/\s+/).filter(Boolean), b = $('#fb').value, c = $('#fc').value;
+    const lo = +$('#lo').value || 0, hi = +$('#hi').value || Infinity, s = $('#fs').value;
+    const r = prods.filter(p => {
+      const pr = Number(p.price || 0), hay = `${B[p.brand_id]?.name || ''} ${p.name} ${p.part_no || ''}`.toLowerCase();
+      return (!b || B[p.brand_id]?.slug === b) && (!c || C[p.category_id]?.slug === c) && pr >= lo && pr <= hi && w.every(k => hay.includes(k));
+    });
+    if (s) r.sort((x, y) => (s === 'a' ? 1 : -1) * (Number(x.price || 0) - Number(y.price || 0)));
+    $('#count').textContent = `${r.length} part${r.length === 1 ? '' : 's'}`;
+    $('#pg').innerHTML = r.map(p => `<article class="pc">${pic(p.image_url, PH, p.name)}<div class="pb"><small class="tag">${esc(B[p.brand_id]?.name || '')}</small><h3>${esc(p.name)}</h3><small>${esc(C[p.category_id]?.name || '')}</small><small>Part number: ${esc(p.part_no || 'on request')}</small><span class="price">${p.price ? money(p.price) : 'Price on request'}</span><button class="btn sm" data-id="${p.id}">${p.price ? 'Add to cart' : 'Request price'}</button></div></article>`).join('')
+      || '<p class="note">No parts match these filters. Clear a filter, or request the part and we will source it.</p>';
+  };
+  $$('.filters input, .filters select').forEach(e => e.oninput = render);
+
+  $('#pg').onclick = e => {
+    const id = e.target.dataset.id, p = id && prods.find(x => x.id == id);
+    if (!p) return;
+    if (p.price) { const b = e.target; cart.add(p); b.textContent = 'Added to cart'; setTimeout(() => b.textContent = 'Add to cart', 1400); return; }
+    $('#dt').textContent = p.name;
+    quoteForm($('#df'), brands, { make: B[p.brand_id]?.name, part: p.part_no, kind: 'quote', note: `Price request: ${p.name}` });
+    $('#dlg').showModal();
+  };
+  render();
+})();
+</script>
+</body>
+</html>

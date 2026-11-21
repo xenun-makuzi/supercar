@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Car Parts - New Request</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f2f3f5;font-family:Arial,Helvetica,sans-serif;color:#222;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f3f5;padding:35px 10px;">
+<tr>
+<td align="center">
+
+<table width="620" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:620px;background:#ffffff;border-radius:10px;overflow:hidden;">
+
+  <!-- BRAND HEADER -->
+  <tr>
+    <td style="background:#101114;padding:28px 32px;border-bottom:4px solid #e31825;">
+      <div style="font-size:27px;font-weight:900;letter-spacing:-1px;color:#ffffff;">SUPER<span style="color:#ed1c2b;">CAR</span>PARTS</div>
+      <div style="font-size:10px;color:#aaaaaa;letter-spacing:3px;margin-top:7px;">DRIVE BETTER. GO FURTHER.</div>
+    </td>
+  </tr>
+
+  <!-- INTRODUCTION -->
+  <tr>
+    <td style="padding:32px;">
+      <span style="background:#fff0f0;color:#d71927;padding:9px 13px;font-size:11px;font-weight:bold;letter-spacing:1px;border-radius:4px;">NEW CUSTOMER REQUEST</span>
+      <h1 style="font-size:25px;margin:22px 0 10px;color:#151515;">{{kind_label}} received</h1>
+      <p style="font-size:14px;line-height:1.8;color:#666;margin:0;">
+        A new request has been submitted through the Super Car Parts website.
+        Below is the information provided by the customer.
+      </p>
+    </td>
+  </tr>
+
+  <!-- REQUEST TYPE -->
+  <tr>
+    <td style="padding:0 32px 22px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#101114;border-radius:7px;">
+        <tr>
+          <td style="padding:17px 20px;">
+            <div style="font-size:10px;color:#aaa;letter-spacing:1px;">REQUEST TYPE</div>
+            <div style="font-size:19px;font-weight:bold;color:#ffffff;margin-top:6px;">{{kind_label}}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- CUSTOMER INFORMATION -->
+  <tr>
+    <td style="padding:0 32px 24px;">
+      <h3 style="font-size:13px;letter-spacing:1px;color:#171717;border-bottom:2px solid #e31825;padding-bottom:12px;">CUSTOMER INFORMATION</h3>
+      <table width="100%" cellpadding="11" cellspacing="0" style="background:#f7f7f8;border-radius:6px;">
+        <tr>
+          <td width="35%" style="font-size:12px;color:#777;">Full name</td>
+          <td style="font-size:13px;font-weight:bold;color:#222;">{{name}}</td>
+        </tr>
+        <tr>
+          <td style="font-size:12px;color:#777;">Email address</td>
+          <td style="font-size:13px;color:#222;"><a href="mailto:{{email}}" style="color:#d71927;text-decoration:none;">{{email}}</a></td>
+        </tr>
+        <tr>
+          <td style="font-size:12px;color:#777;">Phone / WhatsApp</td>
+          <td style="font-size:13px;color:#222;">{{phone}}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- VEHICLE DETAILS -->
+  <tr>
+    <td style="padding:0 32px 24px;">
+      <h3 style="font-size:13px;letter-spacing:1px;color:#171717;border-bottom:2px solid #e31825;padding-bottom:12px;">VEHICLE INFORMATION</h3>
+      <table width="100%" cellpadding="11" cellspacing="0" style="background:#f7f7f8;border-radius:6px;">
+        <tr>
+          <td width="35%" style="font-size:12px;color:#777;">Manufacturer</td>
+          <td style="font-size:13px;font-weight:bold;color:#222;">{{make}}</td>
+        </tr>
+        <tr>
+          <td style="font-size:12px;color:#777;">Model</td>
+          <td style="font-size:13px;color:#222;">{{model}}</td>
+        </tr>
+        <tr>
+          <td style="font-size:12px;color:#777;">Variant / Year</td>
+          <td style="font-size:13px;color:#222;">{{variant}}</td>
+        </tr>
+        <tr>
+          <td style="font-size:12px;color:#777;">Part number</td>
+          <td style="font-size:13px;font-weight:bold;color:#d71927;">{{part_no}}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {{#is_order}}
+  <!-- ORDER ITEMS (cart orders only) -->
+  <tr>
+    <td style="padding:0 32px 24px;">
+      <h3 style="font-size:13px;letter-spacing:1px;color:#171717;border-bottom:2px solid #e31825;padding-bottom:12px;">ORDER ITEMS</h3>
+      <table width="100%" cellpadding="11" cellspacing="0" style="background:#f7f7f8;border-radius:6px;">
+        <tr>
+          <td style="font-size:10px;color:#777;letter-spacing:1px;border-bottom:1px solid #e3e3e6;">ITEM</td>
+          <td align="center" style="font-size:10px;color:#777;letter-spacing:1px;border-bottom:1px solid #e3e3e6;">QTY</td>
+          <td align="right" style="font-size:10px;color:#777;letter-spacing:1px;border-bottom:1px solid #e3e3e6;">AMOUNT</td>
+        </tr>
+        {{#orders}}
+        <tr>
+          <td style="font-size:13px;color:#222;border-bottom:1px solid #ececee;">
+            <strong>{{name}}</strong><br>
+            <span style="font-size:11px;color:#777;">Part no. {{part_no}} &nbsp;|&nbsp; {{price}} each</span>
+          </td>
+          <td align="center" style="font-size:13px;color:#222;border-bottom:1px solid #ececee;">{{qty}}</td>
+          <td align="right" style="font-size:13px;font-weight:bold;color:#222;border-bottom:1px solid #ececee;">{{line_total}}</td>
+        </tr>
+        {{/orders}}
+      </table>
+    </td>
+  </tr>
+
+  <!-- PAYMENT METHOD AND TOTAL -->
+  <tr>
+    <td style="padding:0 32px 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#101114;border-radius:7px;">
+        <tr>
+          <td style="padding:17px 20px;">
+            <div style="font-size:10px;color:#aaa;letter-spacing:1px;">PAYMENT METHOD</div>
+            <div style="font-size:17px;font-weight:bold;color:#ffffff;margin-top:6px;">{{payment_method}}</div>
+          </td>
+          <td align="right" style="padding:17px 20px;">
+            <div style="font-size:10px;color:#aaa;letter-spacing:1px;">ORDER TOTAL</div>
+            <div style="font-size:24px;font-weight:bold;color:#ffffff;margin-top:4px;">{{total}}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {{/is_order}}
+
+  <!-- CUSTOMER MESSAGE -->
+  <tr>
+    <td style="padding:0 32px 30px;">
+      <h3 style="font-size:13px;letter-spacing:1px;color:#171717;border-bottom:2px solid #e31825;padding-bottom:12px;">CUSTOMER REQUIREMENTS</h3>
+      <div style="background:#f7f7f8;border-left:4px solid #e31825;padding:20px;border-radius:4px;font-size:13px;line-height:1.8;color:#444;white-space:pre-wrap;">{{details}}</div>
+    </td>
+  </tr>
+
+  <!-- SUBMISSION INFORMATION -->
+  <tr>
+    <td style="padding:0 32px 30px;">
+      <table width="100%" cellpadding="14" cellspacing="0" style="border:1px solid #eeeeee;border-radius:6px;">
+        <tr>
+          <td style="font-size:11px;color:#777;">SUBMISSION DATE</td>
+          <td align="right" style="font-size:12px;font-weight:bold;color:#222;">{{submitted_at}}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#101114;padding:27px 32px;text-align:center;border-top:4px solid #e31825;">
+      <div style="font-size:16px;font-weight:bold;color:#ffffff;">SUPER<span style="color:#ed1c2b;">CAR</span>PARTS</div>
+      <p style="font-size:12px;color:#aaa;line-height:1.7;margin:12px 0;">
+        Premium automotive parts. Specialist sourcing.
+        Service built around your vehicle.
+      </p>
+      <p style="font-size:10px;color:#777;margin:15px 0 0;">&copy; Super Car Parts. All rights reserved.</p>
+    </td>
+  </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
