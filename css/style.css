@@ -511,3 +511,12 @@ dialog.cart-drawer[open]{display:flex;flex-direction:column}
 .loc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
 .loc{padding:26px 24px;background:#fff;border:1px solid var(--line,#e4e6ea);border-top:3px solid var(--red,#d3081f);border-radius:4px}
 .loc h3{margin:0}
+/* Product image slider */
+.pgal{position:relative}
+.pgal button{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#111;font-size:22px;line-height:1;cursor:pointer;opacity:.85}
+.pgal button:hover{opacity:1}
+.pgal button[data-n="-1"]{left:8px}
+.pgal button[data-n="1"]{right:8px}
+.pg-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.pg-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.65)}
+.pg-dots i.on{background:var(--red,#d3081f)}
