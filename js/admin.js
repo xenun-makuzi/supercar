@@ -22,7 +22,7 @@ const TABLES = {
     ['image_url', 'Image', 'image'], ['sort', 'Sort order', 'number']] },
   products: { title: 'Products', order: ['created_at', false], thumb: 'image_url', cols: ['brand_id', 'category_id', 'name', 'part_no', 'price'], fields: [
     ['brand_id', 'Manufacturer', 'ref:brands'], ['category_id', 'Part type', 'ref:categories'], ['name', 'Product name', 'text', 1],
-    ['part_no', 'Part number', 'text'], ['price', 'Price (leave empty for price on request)', 'number'], ['image_url', 'Photo', 'image'], ['description', 'Description', 'area']] }
+    ['part_no', 'Part number', 'text'], ['price', 'Price (leave empty for price on request)', 'number'], ['images', 'Photos (the first one is the cover)', 'images'], ['description', 'Description', 'area']] }
 };
 const one = C => C.title.replace(/s$/, '');
 const S = { refs: {} };
@@ -59,6 +59,7 @@ function input([k, , type, req], v) {
   const a = `name="${k}"${req ? ' required' : ''}`;
   if (type === 'area') return `<textarea ${a} rows="4">${esc(v)}</textarea>`;
   if (type === 'number') return `<input ${a} type="number" step="any" value="${esc(v)}">`;
+  if (type === 'images') return `<span class="gal" data-gal="${k}"><span class="gl"></span><input type="file" accept="image/*" multiple></span>`;
   if (type === 'image') return `<span class="img"><img alt="" ${v ? `src="${esc(v)}"` : 'style="visibility:hidden"'} onerror="this.style.visibility='hidden'"><input type="file" accept="image/*" data-k="${k}"><input type="hidden" name="${k}" value="${esc(v)}"></span>`;
   if (/^(select|ref):/.test(type)) {
     const o = type.startsWith('ref:') ? S.refs[type.slice(4)].map(x => [x.id, x.name]) : type.slice(7).split(',').map(x => [x, x]);
@@ -73,17 +74,40 @@ function form(t, row = {}) {
     <div class="fg">${C.fields.map(fd => `<label${/area|image/.test(fd[2]) ? ' class="wide"' : ''}>${esc(fd[1])}${fd[3] ? ' *' : ''}${input(fd, row[fd[0]])}</label>`).join('')}</div>
     <div class="end"><button type="button" class="btn line" id="cx">Cancel</button><button class="btn">Save</button></div>`;
   $('#cx').onclick = () => $('#dlg').close();
-  $$('input[type=file]', f).forEach(i => i.onchange = () => {
+  $$('input[type=file][data-k]', f).forEach(i => i.onchange = () => {
     const file = i.files[0]; if (!file) return;
     files[i.dataset.k] = file;
     const im = $('img', i.parentNode); im.src = URL.createObjectURL(file); im.style.visibility = 'visible';
   });
+  // Multi-image fields: an ordered list of saved URLs and newly picked files
+  const gal = {};
+  const drawGal = k => {
+    $(`[data-gal="${k}"] .gl`, f).innerHTML = gal[k].map((g, i) => `<figure><img src="${esc(g.url || g.src)}" alt=""><figcaption>${i ? '' : 'Cover'}</figcaption><span><button type="button" data-l="${i}" aria-label="Move earlier">&lsaquo;</button><button type="button" data-x="${i}" aria-label="Remove image">&times;</button></span></figure>`).join('') || '<small class="muted">No images yet</small>';
+  };
+  C.fields.filter(fd => fd[2] === 'images').forEach(([k]) => {
+    gal[k] = (Array.isArray(row[k]) && row[k].length ? row[k] : row.image_url ? [row.image_url] : []).map(url => ({ url }));
+    drawGal(k);
+    const box = $(`[data-gal="${k}"]`, f);
+    $('input[type=file]', box).onchange = e => {
+      for (const file of e.target.files) gal[k].push({ file, src: URL.createObjectURL(file) });
+      e.target.value = ''; drawGal(k);
+    };
+    $('.gl', box).onclick = e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const i = +(b.dataset.x ?? b.dataset.l);
+      if (b.dataset.x != null) gal[k].splice(i, 1);
+      else if (i > 0) [gal[k][i - 1], gal[k][i]] = [gal[k][i], gal[k][i - 1]];
+      drawGal(k);
+    };
+  });
+
   f.onsubmit = async e => {
     e.preventDefault();
     const btn = $('button:not([type])', f), fd = new FormData(f), d = {};
     btn.disabled = true;
     try {
       for (const [k, , type] of C.fields) {
+        if (type === 'images') { d[k] = await Promise.all(gal[k].map(g => g.url || upload(g.file, t))); d.image_url = d[k][0] ?? null; continue; }
         let v = fd.get(k);
         if (type === 'image' && files[k]) v = await upload(files[k], t);
         if (k === 'slug') v = slug(v || fd.get('name'));
@@ -232,3 +256,15 @@ if (!sb) {
   sb.auth.onAuthStateChange((_e, s) => setTimeout(() => gate(s?.user), 0));
   sb.auth.getSession().then(({ data }) => gate(data.session?.user));
 }
+
+// Styles for the multi-image field live here so admin.html needs no change
+document.head.insertAdjacentHTML('beforeend', `<style>
+.gal{display:grid;gap:10px;font-weight:400}
+.gl{display:flex;flex-wrap:wrap;gap:10px}
+.gl figure{position:relative;width:104px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff}
+.gl img{display:block;width:100%;height:78px;object-fit:contain;background:var(--soft)}
+.gl figcaption{position:absolute;top:4px;left:4px;padding:0 6px;border-radius:3px;background:var(--red);color:#fff;font-size:11px}
+.gl figcaption:empty{display:none}
+.gl figure span{display:flex;justify-content:space-between;padding:4px}
+.gl button{width:30px;height:24px;border:0;border-radius:3px;background:var(--soft);cursor:pointer}
+</style>`);
